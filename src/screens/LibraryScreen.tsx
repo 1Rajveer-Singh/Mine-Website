@@ -197,28 +197,43 @@ const papers = [
 
 export default function LibraryScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [cart, setCart] = useState<number[]>([]);
-  const [cartVisible, setCartVisible] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [localCartItems, setLocalCartItems] = useState<any[]>([]);
+
+  // Listen for cart updates from the Header
+  useEffect(() => {
+    const handleCartUpdate = (event: any) => {
+      setLocalCartItems(event.detail.cartItems || []);
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    // Initialize with current cart items
+    if ((window as any).getCartItems) {
+      setLocalCartItems((window as any).getCartItems());
+    }
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
 
   // Filter resources by selected category
   const filteredResources = selectedCategory === 'All'
     ? resources
     : resources.filter(r => r.category === selectedCategory);
 
-  const handleAddToCart = (idx: number) => {
-    if (!cart.includes(idx)) setCart([...cart, idx]);
-  };
-  const handleRemoveFromCart = (idx: number) => {
-    setCart(cart.filter((i: number) => i !== idx));
-  };
-  const handleProceedToPayment = () => {
-    setPaymentSuccess(true);
-    setTimeout(() => {
-      setCart([]);
-      setPaymentSuccess(false);
-      setCartVisible(false);
-    }, 2000);
+  const handleAddToCart = (paper: any, idx: number) => {
+    const cartItem = {
+      id: idx + 1000, // Unique ID for papers
+      name: paper.title,
+      price: 0, // Free resources
+      image: paper.image,
+      type: 'Research Paper'
+    };
+
+    if ((window as any).addToCart) {
+      (window as any).addToCart(cartItem);
+    }
   };
 
   return (
@@ -260,7 +275,7 @@ export default function LibraryScreen() {
             </button>
           ))}
         </section>
-        {/* Library Paper Cards - Minimal Style with Download and View Button */}
+        {/* Library Paper Cards - With Add to Cart Button */}
         <div className="max-w-5xl mx-auto mt-8">
           {papers.map((paper, idx) => (
             <div key={idx} className="flex items-start gap-4 bg-white rounded-xl shadow p-4 mb-4">
@@ -284,6 +299,12 @@ export default function LibraryScreen() {
                   >
                     Download
                   </a>
+                  <button
+                    onClick={() => handleAddToCart(paper, idx)}
+                    className="inline-block bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>
@@ -299,46 +320,6 @@ export default function LibraryScreen() {
             <a href="/contact" className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-2xl px-10 py-4 rounded-lg shadow transition">Request Resource</a>
           </div>
         </section>
-        {/* Cart Modal */}
-        {cartVisible && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md relative">
-              <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl" onClick={() => setCartVisible(false)}>&times;</button>
-              <h2 className="text-2xl font-bold mb-4 text-blue-900">Your Cart</h2>
-              {cart.length === 0 ? (
-                <div className="text-gray-700">Your cart is empty.</div>
-              ) : (
-                <ul className="mb-4">
-                  {cart.map(idx => (
-                    <li key={idx} className="flex justify-between items-center mb-2">
-                      <span>{resources[idx].title}</span>
-                      <button className="text-red-500" onClick={() => handleRemoveFromCart(idx)}>Remove</button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {paymentSuccess ? (
-                <div className="text-green-600 font-bold">Payment Successful!</div>
-              ) : (
-                <button
-                  className="bg-orange-500 text-white px-6 py-2 rounded-full font-bold hover:bg-orange-600 transition w-full"
-                  onClick={handleProceedToPayment}
-                  disabled={cart.length === 0}
-                >
-                  Proceed to Payment
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-        {/* Floating Cart Button */}
-        <button
-          className="fixed bottom-6 right-6 bg-orange-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg text-xl font-bold z-40"
-          onClick={() => setCartVisible(true)}
-        >
-          🛒
-          {cart.length > 0 && <span className="absolute top-2 right-2 bg-green-600 text-white text-xs rounded-full px-2">{cart.length}</span>}
-        </button>
       </div>
     </div>
   );
