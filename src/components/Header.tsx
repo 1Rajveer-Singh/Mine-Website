@@ -108,9 +108,19 @@ const Header = () => {
       if (authToken && storedProfile) {
         try {
           const profile = JSON.parse(storedProfile);
+          
+          // Ensure profile has required properties
+          const safeProfile = {
+            name: profile.name || (profile.firstName ? `${profile.firstName} ${profile.lastName}` : 'User'),
+            email: profile.email || '',
+            role: profile.role || 'User',
+            avatar: profile.avatar || '/assets/imageperson1.jpg',
+            ...profile
+          };
+          
           setIsLoggedIn(true);
-          setUserProfile(profile);
-          setIsPremiumUser(profile.role?.includes('Premium') || profile.role?.includes('Demo'));
+          setUserProfile(safeProfile);
+          setIsPremiumUser(safeProfile.role?.includes('Premium') || safeProfile.role?.includes('Demo'));
         } catch (error) {
           console.error('Error parsing stored profile:', error);
           // Clear invalid data
@@ -731,9 +741,18 @@ const Header = () => {
     console.log('=== Login Success Debug ===');
     console.log('User profile received:', userProfile);
     
+    // Ensure userProfile has required properties
+    const safeUserProfile = {
+      name: userProfile.name || userProfile.firstName ? `${userProfile.firstName} ${userProfile.lastName}` : 'User',
+      email: userProfile.email || '',
+      role: userProfile.role || 'User',
+      avatar: userProfile.avatar || '/assets/imageperson1.jpg',
+      ...userProfile
+    };
+    
     setIsLoggedIn(true);
-    setUserProfile(userProfile);
-    setIsPremiumUser(userProfile.role?.includes('Premium') || userProfile.role?.includes('Demo'));
+    setUserProfile(safeUserProfile);
+    setIsPremiumUser(safeUserProfile.role?.includes('Premium') || safeUserProfile.role?.includes('Demo'));
     setIsLoginModalOpen(false);
     
     console.log('Login state updated successfully');
@@ -1254,7 +1273,7 @@ const Header = () => {
                       )}
                     </div>
                     <span className="hidden lg:block text-gray-700 group-hover:text-blue-600 font-medium text-sm truncate max-w-20 relative z-10">
-                      {userProfile.name.split(' ')[0]}
+                      {userProfile.name ? userProfile.name.split(' ')[0] : 'User'}
                     </span>
                     <FaChevronDown className="hidden lg:block text-xs text-gray-500 group-hover:text-blue-500 relative z-10 transition-all duration-300" />
                   </button>
@@ -1294,10 +1313,10 @@ const Header = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold truncate text-blue-600 text-sm sm:text-base">{userProfile.name}</h3>
-                            <p className="text-gray-600 text-xs sm:text-sm truncate">{userProfile.email}</p>
+                            <h3 className="font-bold truncate text-blue-600 text-sm sm:text-base">{userProfile.name || 'User'}</h3>
+                            <p className="text-gray-600 text-xs sm:text-sm truncate">{userProfile.email || 'No email'}</p>
                             <span className="inline-block mt-1 px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full text-xs border border-blue-200 text-blue-700">
-                              {userProfile.role}
+                              {userProfile.role || 'User'}
                             </span>
                           </div>
                           
